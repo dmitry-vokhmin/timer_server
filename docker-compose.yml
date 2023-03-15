@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: postgres-timer
+    image: postgres:13
+    volumes:
+      - postgres-timer:/var/lib/postgresql/data/
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_HOST: 'localhost'
+      POSTGRES_PORT: '5432'
+      POSTGRES_DB: 'timer'
+
+volumes:
+  postgres-timer:
+    name: postgres-timer
