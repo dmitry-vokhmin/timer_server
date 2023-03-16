@@ -1,3 +1,4 @@
+import json
 from time import time
 
 from fastapi import Depends
@@ -5,15 +6,20 @@ from fastapi import Depends
 from app.repository.model.timer import Timer
 from app.repository.timer import TimerRepository, get_timer_repository
 from app.router.schema.timer import CreateTimerInSchema, GetTimerSchema
+from app.service.rabbitmq.publisher import BaseRabbitQueuePublisher
 
 
 class TimerService:
-    def __init__(self, repository: TimerRepository):
+    def __init__(self, repository: TimerRepository, publisher: BaseRabbitQueuePublisher):
+        self.publisher = publisher
         self.repository = repository
 
     def create_timer(self, timer_schema: CreateTimerInSchema) -> Timer:
         expired_at = int(time() + self.get_seconds(timer_schema))
-        return self.repository.create_timer(timer_schema.url, expired_at)
+        timer = self.repository.create_timer(timer_schema.url, expired_at)
+        json_data = json.dumps(f"{timer_schema.url}/{timer.id}")
+        self.publisher.publish(json_data, self.get_seconds(timer_schema) * 1000)
+        return timer
 
     def get_timer(self, timer_id: int) -> GetTimerSchema:
         timer = self.repository.get_timer(timer_id)
@@ -28,5 +34,8 @@ class TimerService:
                 + timer_schema.seconds)
 
 
-def get_timer_service(timer_repository=Depends(get_timer_repository)):
-    return TimerService(timer_repository)
+def get_timer_service(
+        timer_repository=Depends(get_timer_repository),
+        publisher=Depends(BaseRabbitQueuePublisher)
+):
+    return TimerService(timer_repository, publisher)

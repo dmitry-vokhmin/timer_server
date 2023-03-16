@@ -14,7 +14,18 @@ services:
       POSTGRES_HOST: 'localhost'
       POSTGRES_PORT: '5432'
       POSTGRES_DB: 'timer'
+  rabbitmq3:
+    container_name: rabbitmq-timer
+    image: rabbitmq:3.8-management-alpine
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq/
+      - rabbit-log:/var/log/rabbitmq
 
 volumes:
+  rabbit-data:
+  rabbit-log:
   postgres-timer:
     name: postgres-timer
